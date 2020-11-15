@@ -40,7 +40,8 @@ export default Vue.extend({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       player: null as any,
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      unsubscribe(): void {}
+      unsubscribe(): void {},
+      mediaDuration: 0
     };
   },
   computed: {
@@ -51,7 +52,8 @@ export default Vue.extend({
     ...mapState('playbackManager', [
       'lastProgressUpdate',
       'currentTime',
-      'currentVolume'
+      'currentVolume',
+      'isMinimized'
     ]),
     ...mapState('deviceProfile', ['deviceId']),
     ...mapState('user', ['accessToken']),
@@ -87,6 +89,9 @@ export default Vue.extend({
     }
   },
   async mounted() {
+    // Convert to seconds
+    this.mediaDuration =
+      this.ticksToMs(this.getCurrentItem.RunTimeTicks) / 1000;
     try {
       // Mux.js needs to be globally available before Shaka is loaded, in order for MPEG2 TS transmuxing to work.
       window.muxjs = muxjs;

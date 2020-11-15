@@ -24,9 +24,15 @@
             <v-container fill-height fluid class="pa-0 justify-center">
               <shaka-player ref="videoPlayer" />
             </v-container>
+            <up-next
+              v-if="showUpNext"
+              :time-left="timeLeft"
+              @hide="upNextUserHidden = true"
+            />
             <!-- Mini Player Overlay -->
             <v-fade-transition>
-              <v-overlay v-show="hover && isMinimized" absolute>
+              <!-- z-index: 5 is the default, but hardcoded in case of changes -->
+              <v-overlay v-show="hover && isMinimized" absolute z-index="5">
                 <div class="d-flex flex-column player-overlay">
                   <div class="d-flex flex-row">
                     <v-btn icon @click="toggleMinimized">
@@ -38,14 +44,7 @@
                     </v-btn>
                   </div>
                   <div
-                    class="
-                      absolute-cover
-                      pointer-events-none
-                      d-flex
-                      flex-row
-                      justify-center
-                      align-center
-                    "
+                    class="absolute-cover pointer-events-none d-flex flex-row justify-center align-center"
                   >
                     <v-btn
                       class="pointer-events-all"
@@ -85,13 +84,7 @@
                 absolute
               >
                 <div
-                  class="
-                    d-flex
-                    flex-column
-                    justify-space-between
-                    align-center
-                    player-overlay
-                  "
+                  class="d-flex flex-column justify-space-between align-center player-overlay"
                 >
                   <div class="osd-top pt-s pl-s pr-s">
                     <div class="d-flex align-center py-2 px-4">
@@ -112,39 +105,23 @@
                     <div class="pa-4">
                       <time-slider />
                       <div
-                        class="
-                          controls-wrapper
-                          d-flex
-                          align-stretch
-                          justify-space-between
-                        "
+                        class="controls-wrapper d-flex align-stretch justify-space-between"
                       >
                         <div
                           v-if="$vuetify.breakpoint.mdAndUp"
-                          class="
-                            d-flex
-                            flex-column
-                            align-start
-                            justify-center
-                            mr-auto
-                            video-title
-                          "
+                          class="d-flex flex-column align-start justify-center mr-auto video-title"
                         >
                           <template v-if="getCurrentItem.Type === 'Episode'">
                             <span class="mt-1 text-subtitle-1 text-truncate">
                               {{ getCurrentItem.Name }}
                             </span>
                             <span
-                              class="
-                                text-subtitle-2 text--secondary text-truncate
-                              "
+                              class="text-subtitle-2 text--secondary text-truncate"
                             >
                               {{ getCurrentItem.SeriesName }}
                             </span>
                             <span
-                              class="
-                                text-subtitle-2 text--secondary text-truncate
-                              "
+                              class="text-subtitle-2 text--secondary text-truncate"
                             >
                               {{
                                 $t('seasonEpisode', {
@@ -160,12 +137,7 @@
                           </template>
                         </div>
                         <div
-                          class="
-                            d-flex
-                            player-controls
-                            align-center
-                            justify-start justify-md-center
-                          "
+                          class="d-flex player-controls align-center justify-start justify-md-center"
                         >
                           <v-btn icon class="mx-1" @click="setPreviousTrack">
                             <v-icon> mdi-skip-previous </v-icon>
@@ -254,7 +226,8 @@ export default Vue.extend({
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       unsubscribe(): void {},
       fullScreenVideo: false,
-      keepOpen: false
+      keepOpen: false,
+      upNextUserHidden: false
     };
   },
   computed: {
@@ -262,7 +235,8 @@ export default Vue.extend({
       'getCurrentItem',
       'getPreviousItem',
       'getNextItem',
-      'getCurrentlyPlayingMediaType'
+      'getCurrentlyPlayingMediaType',
+      'getCurrentTime'
     ]),
     ...mapState('playbackManager', ['status', 'isMinimized']),
     isPlaying(): boolean {
@@ -279,6 +253,30 @@ export default Vue.extend({
       } else {
         disableBodyScroll(this.$refs.playerDialog as Element);
       }
+    },
+    mediaDuration(): number {
+      // In seconds
+      return this.ticksToMs(this.getCurrentItem.RunTimeTicks) / 1000;
+    },
+    timeLeft(): number {
+      return parseInt((this.mediaDuration - this.getCurrentTime).toFixed());
+    },
+    showUpNext(): boolean {
+      if (this.isMinimized) {
+        return false;
+      }
+      if (this.upNextUserHidden) {
+        return false;
+      }
+      return true;
+      // How much of the video to go through before showing
+      // the up next component
+      // const showAtProgressPercentage = 0.97;
+
+      // if (this.currentTime <= this.mediaDuration * showAtProgressPercentage) {
+      //   return true;
+      // }
+      // return false;
     }
   },
   mounted() {
@@ -293,6 +291,125 @@ export default Vue.extend({
             window.removeEventListener('keydown', this.handleKeyPress);
           } else if (state.playbackManager.isMinimized === false) {
             window.addEventListener('keydown', this.handleKeyPress);
+          }
+
+          break;
+        case 'playbackManager/INCREASE_QUEUE_INDEX':
+          this.upNextUserHidden = false;
+          break;
+        case 'playbackManager/DECREASE_QUEUE_INDEX':
+        case 'playbackManager/SET_CURRENT_ITEM_INDEX':
+          // Report playback stop for the previous item
+          if (
+            state.playbackManager.currentTime !== null &&
+            this.getPreviousItem?.Id
+          ) {
+            this.$api.playState.reportPlaybackStopped(
+              {
+                playbackStopInfo: {
+                  ItemId: this.getPreviousItem.Id,
+                  PlaySessionId: state.playbackManager.playSessionId,
+                  PositionTicks: this.msToTicks(
+                    state.playbackManager.currentTime * 1000
+                  )
+                }
+              },
+              { progress: false }
+            );
+          }
+
+          // Then report the start of the next one
+          if (this.getCurrentItem?.Id) {
+            this.$api.playState.reportPlaybackStart(
+              {
+                playbackStartInfo: {
+                  CanSeek: true,
+                  ItemId: this.getCurrentItem.Id,
+                  PlaySessionId: state.playbackManager.playSessionId,
+                  MediaSourceId: state.playbackManager.currentMediaSource?.Id,
+                  AudioStreamIndex:
+                    state.playbackManager.currentAudioStreamIndex,
+                  SubtitleStreamIndex:
+                    state.playbackManager.currentSubtitleStreamIndex
+                }
+              },
+              { progress: false }
+            );
+
+            this.updateMetadata();
+          }
+
+          this.setLastProgressUpdate({ progress: new Date().getTime() });
+          break;
+        case 'playbackManager/SET_CURRENT_TIME': {
+          if (state.playbackManager.status === PlaybackStatus.Playing) {
+            const now = new Date().getTime();
+
+            if (
+              this.getCurrentItem !== null &&
+              now - state.playbackManager.lastProgressUpdate > 1000 &&
+              state.playbackManager.currentTime !== null
+            ) {
+              this.$api.playState.reportPlaybackProgress(
+                {
+                  playbackProgressInfo: {
+                    ItemId: this.getCurrentItem.Id,
+                    PlaySessionId: state.playbackManager.playSessionId,
+                    IsPaused: false,
+                    PositionTicks: Math.round(
+                      this.msToTicks(state.playbackManager.currentTime * 1000)
+                    )
+                  }
+                },
+                { progress: false }
+              );
+
+              this.setLastProgressUpdate({ progress: new Date().getTime() });
+            }
+          }
+
+          break;
+        }
+        case 'playbackManager/STOP_PLAYBACK':
+          if (state.playbackManager.currentTime !== null) {
+            this.$api.playState.reportPlaybackStopped(
+              {
+                playbackStopInfo: {
+                  ItemId: this.getPreviousItem.Id,
+                  PlaySessionId: state.playbackManager.playSessionId,
+                  PositionTicks: this.msToTicks(
+                    state.playbackManager.currentTime * 1000
+                  )
+                }
+              },
+              { progress: false }
+            );
+
+            this.setLastProgressUpdate({ progress: 0 });
+
+            this.resetMetadata();
+
+            this.removeMediaHandlers();
+          }
+
+          break;
+        case 'playbackManager/PAUSE_PLAYBACK':
+          if (state.playbackManager.currentTime !== null) {
+            this.$api.playState.reportPlaybackProgress(
+              {
+                playbackProgressInfo: {
+                  ItemId: this.getCurrentItem.Id,
+                  PlaySessionId: state.playbackManager.playSessionId,
+                  IsPaused: true,
+                  PositionTicks: Math.round(
+                    this.msToTicks(state.playbackManager.currentTime * 1000)
+                  )
+                }
+              },
+              { progress: false }
+            );
+
+            this.setLastProgressUpdate({ progress: new Date().getTime() });
           }
 
           break;
