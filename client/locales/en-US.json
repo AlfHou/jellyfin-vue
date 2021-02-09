@@ -64,6 +64,7 @@
   "guestStar": "Guest Star",
   "headerExternalIds": "External IDs",
   "headerPaths": "Path",
+  "hide": "Hide",
   "home": "Home",
   "homeHeader": {
     "items": {
@@ -174,6 +175,7 @@
   "movies": "Movies",
   "name": "Name",
   "networks": "Networks",
+  "nextEpisodePlayingIn": "Next Episode Playing in",
   "nextUp": "Next up",
   "noAudioTrackSelected": "No audio track selected",
   "noAudioTracksAvailable": "No audio tracks available",
@@ -233,6 +235,7 @@
   "search": "Search",
   "seasonEpisode": "Season {seasonNumber}, Episode {episodeNumber}",
   "seasonEpisodeAbbrev": "S{seasonNumber} E{episodeNumber}",
+  "seconds": "seconds",
   "series": "Series",
   "server": "Server",
   "serverVersion": "Server version",
@@ -357,6 +360,7 @@
   "sortTitle": "Sort title",
   "specialFeatures": "Special Features",
   "speed": "Speed",
+  "startNow": "Start now",
   "status": "Status",
   "studios": "Studios",
   "subtitles": "Subtitles",
