@@ -240,7 +240,7 @@
   "search": "Search",
   "seasonEpisode": "Season {seasonNumber}, Episode {episodeNumber}",
   "seasonEpisodeAbbrev": "S{seasonNumber} E{episodeNumber}",
-  "seconds": "seconds",
+  "seconds": "Seconds",
   "series": "Series",
   "server": "Server",
   "serverVersion": "Server version",
