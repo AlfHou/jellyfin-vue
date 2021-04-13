@@ -26,7 +26,7 @@
             </v-container>
             <up-next
               v-if="showUpNext"
-              :time-left="timeLeft"
+              :time-left="getTimeLeft"
               @hide="upNextUserHidden = true"
               @startNext="setNextTrack()"
             />
@@ -235,7 +235,9 @@ export default Vue.extend({
       'getCurrentItem',
       'getPreviousItem',
       'getNextItem',
-      'getCurrentlyPlayingMediaType'
+      'getCurrentlyPlayingMediaType',
+      'getDuration',
+      'getTimeLeft'
     ]),
     ...mapState('playbackManager', ['status', 'isMinimized', 'currentTime']),
     isPlaying(): boolean {
@@ -253,13 +255,6 @@ export default Vue.extend({
         disableBodyScroll(this.$refs.playerDialog as Element);
       }
     },
-    mediaDuration(): number {
-      // In seconds
-      return this.ticksToMs(this.getCurrentItem.RunTimeTicks) / 1000;
-    },
-    timeLeft(): number {
-      return parseInt((this.mediaDuration - this.getCurrentTime).toFixed());
-    },
     showUpNext(): boolean {
       if (
         this.isMinimized ||
@@ -274,7 +269,7 @@ export default Vue.extend({
       // the 'up-next' component
       const showAtProgressPercentage = 0.97;
 
-      if (this.currentTime <= this.mediaDuration * showAtProgressPercentage) {
+      if (this.currentTime <= this.getDuration * showAtProgressPercentage) {
         return false;
       }
 
