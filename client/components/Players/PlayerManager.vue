@@ -32,8 +32,7 @@
             />
             <!-- Mini Player Overlay -->
             <v-fade-transition>
-              <!-- z-index: 5 is the default, but hardcoded in case of changes -->
-              <v-overlay v-show="hover && isMinimized" absolute z-index="5">
+              <v-overlay v-show="hover && isMinimized" absolute>
                 <div class="d-flex flex-column player-overlay">
                   <div class="d-flex flex-row">
                     <v-btn icon @click="toggleMinimized">
@@ -271,6 +270,7 @@ export default Vue.extend({
       ) {
         return false;
       }
+
       // How much of the video to go through before showing
       // the 'up-next' component
       const showAtProgressPercentage = 0.97;
@@ -281,6 +281,7 @@ export default Vue.extend({
       ) {
         return false;
       }
+
       return true;
     }
   },
@@ -300,12 +301,10 @@ export default Vue.extend({
 
           break;
         case 'playbackManager/INCREASE_QUEUE_INDEX':
-          this.upNextUserHidden = false;
-          break;
         case 'playbackManager/DECREASE_QUEUE_INDEX':
-          this.upNextUserHidden = false;
-          break;
         case 'playbackManager/SET_CURRENT_ITEM_INDEX':
+          this.upNextUserHidden = false;
+
           // Report playback stop for the previous item
           if (
             state.playbackManager.currentTime !== null &&
