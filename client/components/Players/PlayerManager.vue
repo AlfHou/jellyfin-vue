@@ -44,7 +44,14 @@
                     </v-btn>
                   </div>
                   <div
-                    class="absolute-cover pointer-events-none d-flex flex-row justify-center align-center"
+                    class="
+                      absolute-cover
+                      pointer-events-none
+                      d-flex
+                      flex-row
+                      justify-center
+                      align-center
+                    "
                   >
                     <v-btn
                       class="pointer-events-all"
@@ -84,7 +91,13 @@
                 absolute
               >
                 <div
-                  class="d-flex flex-column justify-space-between align-center player-overlay"
+                  class="
+                    d-flex
+                    flex-column
+                    justify-space-between
+                    align-center
+                    player-overlay
+                  "
                 >
                   <div class="osd-top pt-s pl-s pr-s">
                     <div class="d-flex align-center py-2 px-4">
@@ -105,23 +118,39 @@
                     <div class="pa-4">
                       <time-slider />
                       <div
-                        class="controls-wrapper d-flex align-stretch justify-space-between"
+                        class="
+                          controls-wrapper
+                          d-flex
+                          align-stretch
+                          justify-space-between
+                        "
                       >
                         <div
                           v-if="$vuetify.breakpoint.mdAndUp"
-                          class="d-flex flex-column align-start justify-center mr-auto video-title"
+                          class="
+                            d-flex
+                            flex-column
+                            align-start
+                            justify-center
+                            mr-auto
+                            video-title
+                          "
                         >
                           <template v-if="getCurrentItem.Type === 'Episode'">
                             <span class="mt-1 text-subtitle-1 text-truncate">
                               {{ getCurrentItem.Name }}
                             </span>
                             <span
-                              class="text-subtitle-2 text--secondary text-truncate"
+                              class="
+                                text-subtitle-2 text--secondary text-truncate
+                              "
                             >
                               {{ getCurrentItem.SeriesName }}
                             </span>
                             <span
-                              class="text-subtitle-2 text--secondary text-truncate"
+                              class="
+                                text-subtitle-2 text--secondary text-truncate
+                              "
                             >
                               {{
                                 $t('seasonEpisode', {
@@ -137,7 +166,12 @@
                           </template>
                         </div>
                         <div
-                          class="d-flex player-controls align-center justify-start justify-md-center"
+                          class="
+                            d-flex
+                            player-controls
+                            align-center
+                            justify-start justify-md-center
+                          "
                         >
                           <v-btn icon class="mx-1" @click="setPreviousTrack">
                             <v-icon> mdi-skip-previous </v-icon>
@@ -250,7 +284,7 @@ export default Vue.extend({
       if (
         this.isMinimized ||
         this.upNextUserHidden ||
-        this.getCurrentItem.Type !== 'Episode' ||
+        this.getCurrentlyPlayingMediaType !== 'Video' ||
         !this.getNextItem
       ) {
         return false;
